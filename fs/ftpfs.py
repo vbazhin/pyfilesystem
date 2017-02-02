@@ -981,14 +981,19 @@ class FTPFS(FS):
                 if lines[0][:3] == "250":
                     list_line = lines[1]
                     # MLST line is preceded by space
-                    if list_line[0] == ' ':
-                        on_line(list_line[1:])
-                    else: # Matrix FTP server has bug
-                        on_line(list_line)
-                # if it's a dir, then we can send a MLSD
-                if dirlist[dirlist.keys()[0]]['try_cwd']:
-                    dirlist = {}
-                    self.ftp.retrlines("MLSD " + encoded_path, on_line)
+                    try:
+                        if list_line[0] == ' ':
+                            on_line(list_line[1:])
+                        else: # Matrix FTP server has bug
+                            on_line(list_line)
+
+                        # if it's a dir, then we can send a MLSD
+                        if dirlist[list(dirlist.keys())[0]]['try_cwd']:
+                            dirlist = {}
+                            self.ftp.retrlines("MLSD " + encoded_path, on_line)
+                    except IndexError:
+                        dirlist = {}
+                        self.ftp.retrlines("MLSD " + encoded_path, on_line)
             else:
                 self.ftp.dir(encoded_path, on_line)
         except error_reply:
